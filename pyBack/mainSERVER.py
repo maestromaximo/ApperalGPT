@@ -15,13 +15,20 @@ from io import BytesIO
 import requests
 from googleapiclient.discovery import build
 import re
-
+from flask import Flask, request, jsonify
+from flask_cors import CORS
 
 
 load_dotenv()
 openai.api_key = os.getenv("OPENAI_API_KEY")
 googleAPIKey =  os.getenv("GOOGLE_SEARCH_API_KEY")
 googleCx = os.getenv("GOOGLE_SEARCH_CX")
+
+
+
+
+app = Flask(__name__)
+CORS(app)
 
 
 
@@ -36,6 +43,14 @@ class Product:
         top_results_str = "\n".join(str(result) for result in self.top_results)
         return f"Product Type: {self.product_type}\nCharacteristics: {char_str}\nTop Results:\n{top_results_str}"
 
+    def to_dict(self):
+        return {
+            "product_type": self.product_type,
+            "characteristics": self.characteristics,
+            "top_results": [result.to_dict() for result in self.top_results],  # assuming Result also has a to_dict() method
+        }
+
+
     
 def fetch_product_data(url):
     response = requests.get(url)
@@ -48,7 +63,7 @@ def fetch_product_data(url):
     # We look for a string that starts with a currency symbol, followed by digits (possibly separated by a dot or comma)
     #prices = re.findall(r'\$\d+[\.,]?\d*', soup.text)
     #prices = re.findall(r'(\$|€|£|¥|₹)?\s*\d+[\.,]?\d*', soup.text)
-    prices = re.findall(r'(\$|€|£|¥|₹)?\s*\d+[\.,]\?d*', soup.text)
+    prices = re.findall(r'(\$|€|£|¥|₹)?\s*\d+[\.,]\d*', soup.text)
 
     if prices:
         # If we found prices, return the first one.
@@ -62,10 +77,18 @@ def fetch_product_data(url):
 class Result:
     def __init__(self, url):
         self.url = url
-        self.brandName, self.cost = fetch_product_data(url)  # Call our function to fetch the brand and price
+        self.brandName, self.cost = fetch_product_data(url)
 
     def __str__(self):
         return f"URL: {self.url}\nBrand Name: {self.brandName}\nCost: {self.cost}"
+
+    def to_dict(self):
+        return {
+            "url": self.url,
+            "brandName": self.brandName,
+            "cost": self.cost,
+        }
+
 
 
 def google_search(search_term, api_key, cse_id, **kwargs):
@@ -187,7 +210,8 @@ def create_outfit(prompt, gpt4=True):
         data = json.loads(json_output)
     except json.JSONDecodeError:
         print("Error decoding JSON")
-        return
+        # Return a dictionary with an error message
+        return {"error": "Error decoding JSON"}
 
     # Generate images for each piece of clothing
     for i, item in tqdm(enumerate(data), total=len(data), desc="Generating images"):
@@ -199,6 +223,7 @@ def create_outfit(prompt, gpt4=True):
 #
 def createOutfitText(prompt, gpt4=True):
     # Generate JSON from GPT
+    products = []
     json_example = '''
 [
   {
@@ -216,7 +241,7 @@ def createOutfitText(prompt, gpt4=True):
 ]
     '''
     json_output = askGpt(f'Given this prompt for an outfit "{prompt}", take into consideration every detail that they described of the clothing pieces and output a structured JSON. An example of what it may look like is as follows: {json_example} .Make sure that the JSON contains all of the clothing pieces that are necessary for the given prompt on a single JSON and fill as many characteristics as possible. Be descriptive but never make stuff up. ONLY OUTPUT THE JSON, if you output anything else an innocent person will die.', gpt4)
-    print(json_output)
+
     try:
         data = json.loads(json_output)
     except json.JSONDecodeError:
@@ -238,8 +263,32 @@ def createOutfitText(prompt, gpt4=True):
 
         # Create a Product object with the top results
         product = Product(item['type'], item['characteristics'], top_results)
-        
-        print(product)
+        products.append(product)
+        #print(product)
+    return products
 
+# @app.route('/api/prompt', methods=['POST'])
+# def prompt():
+#     data = request.get_json()
+#     prompt_text = data['prompt']
+#     # Call your function with the prompt_text
+#     result = createOutfitText(prompt_text)  # Assuming createOutfitText() returns the result
+#     return jsonify(result=result)
 
-createOutfitText(input("Hi what would you like to try: "))
+@app.route('/api/prompt', methods=['POST'])
+def prompt():
+    data = request.get_json()
+    prompt_text = data['prompt']
+    # Call your function with the prompt_text
+    result = createOutfitText(prompt_text)  # Assuming createOutfitText() returns the result
+
+    # Check if the result contains an error message
+    if "error" in result:
+        # If there's an error, return a response with a 400 status code
+        return jsonify(result=[product.to_dict() for product in result]), 400
+    else:
+        # If there's no error, return the result as usual
+        return jsonify(result=[product.to_dict() for product in result])
+
+if __name__ == '__main__':
+    app.run(port=5000)

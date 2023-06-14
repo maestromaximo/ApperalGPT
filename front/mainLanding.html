@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Outfit Generator</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+</head>
+<body>
+    <h1>Outfit Generator</h1>
+    <form id="prompt-form">
+        <textarea id="prompt-text" rows="4" cols="50"></textarea>
+        <br>
+        <input type="submit" value="Generate Outfit">
+    </form>
+
+    <div id="result"></div>
+
+    <script>
+    $(document).ready(function(){
+        $("#prompt-form").submit(function(e){
+            e.preventDefault();
+            $.ajax({
+                url: 'http://localhost:5000/api/prompt',
+                type: 'post',
+                dataType: 'json',
+                contentType: 'application/json',
+                data: JSON.stringify({ "prompt": $("#prompt-text").val() }),
+                success: function(data){
+                    $("#result").html("<p>" + JSON.stringify(data) + "</p>");
+                },
+                error: function(err){
+                    console.log(err);
+                }
+            });
+        });
+    });
+    </script>
+</body>
+</html>
