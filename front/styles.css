@@ -1,0 +1,130 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f0f0f0;
+}
+
+.container {
+    width: 80%;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+h1 {
+    color: #333;
+}
+
+#prompt-form {
+    margin-bottom: 20px;
+}
+
+#prompt-text {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+}
+
+#result, #error {
+    padding: 20px;
+    margin-top: 20px;
+}
+
+#result {
+    background-color: #dff0d8;
+    color: #3c763d;
+}
+
+#error {
+    background-color: #f2dede;
+    color: #a94442;
+}
+
+.product-card {
+    position: relative;
+    border: 1px solid #ccc;
+    margin-bottom: 20px;
+    padding: 20px;
+}
+
+/* .results-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+} */
+
+/* .result-card {
+    display: block;
+    width: calc(100% / 3 - 20px);
+    border: 1px solid #ccc;
+    padding: 10px;
+    margin-bottom: 20px;
+    text-decoration: none;
+    color: #333;
+} */
+
+.results-container {
+    display: flex;
+    overflow-x: auto;
+    padding: 20px 0;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.result-card {
+    flex: 0 0 auto;
+    width: 200px; /* Set a fixed width */
+    height: 200px; /* Set a fixed height */
+    border: 1px solid #ccc;
+    padding: 10px;
+    margin-right: 10px; /* Add some margin to create spacing between cards */
+    text-decoration: none;
+    color: #333;
+    background-color: #f9f9f9; /* Add a background color for contrast */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15); /* Add a shadow for a card-like effect */
+    overflow: hidden; /* Ensure the content does not overflow the card */
+    box-sizing: border-box;
+}
+
+
+.result-card h3 {
+    margin: 0 0 10px;
+    white-space: nowrap; /* Prevent the text from wrapping to the next line */
+    overflow: hidden; /* Hide the overflow */
+    text-overflow: ellipsis; /* Add an ellipsis when the text overflows */
+}
+
+.result-card p {
+    margin: 0;
+}
+
+.scroll-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255, 255, 255, 0.7);
+    border: none;
+    font-size: 2em;
+    padding: 10px;
+    cursor: pointer;
+}
+
+.scroll-btn.left {
+    left: 0;
+}
+
+.scroll-btn.right {
+    right: 0;
+}
+/* 
+.result-card {
+    flex: 0 0 auto;
+}
+
+.result-card h3 {
+    margin: 0 0 10px;
+}
+
+.result-card p {
+    margin: 0;
+} */

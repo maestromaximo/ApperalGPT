@@ -2,22 +2,33 @@
 <html>
 <head>
     <title>Outfit Generator</title>
+    <meta name="description" content="Generate your perfect outfit based on your preferences.">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="styles.css">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 </head>
 <body>
-    <h1>Outfit Generator</h1>
-    <form id="prompt-form">
-        <textarea id="prompt-text" rows="4" cols="50"></textarea>
-        <br>
-        <input type="submit" value="Generate Outfit">
-    </form>
+    <div class="container">
+        <h1>Outfit Generator</h1>
+        <form id="prompt-form">
+            <label for="prompt-text">Enter your preferences:</label>
+            <textarea id="prompt-text" rows="4" cols="50" required aria-required="true"></textarea>
+            <br>
+            <input type="submit" value="Generate Outfit">
+        </form>
 
-    <div id="result"></div>
+        <div id="loading" style="display: none;">Generating your outfit...</div>
+        <div id="error" style="display: none;"></div>
+        <div id="products-container"></div>
+    </div>
 
     <script>
     $(document).ready(function(){
         $("#prompt-form").submit(function(e){
             e.preventDefault();
+            $("#loading").show();
+            $("#products-container").hide();
+            $("#error").hide();
             $.ajax({
                 url: 'http://localhost:5000/api/prompt',
                 type: 'post',
@@ -25,9 +36,36 @@
                 contentType: 'application/json',
                 data: JSON.stringify({ "prompt": $("#prompt-text").val() }),
                 success: function(data){
-                    $("#result").html("<p>" + JSON.stringify(data) + "</p>");
+                    $("#loading").hide();
+                    $("#products-container").empty(); // Clear the container
+                    data.result.forEach(function(product) {
+                        var productCard = '<div class="product-card">';
+                        productCard += '<h2>' + product.product_type + '</h2>';
+                        productCard += '<button class="scroll-btn left">&lt;</button>';
+                        productCard += '<div class="results-container">';
+                        product.top_results.forEach(function(result) {
+                            productCard += '<a href="' + result.url + '" target="_blank" class="result-card">';
+                            productCard += '<img src="' + result.image_url + '" alt="' + result.brandName + '">';
+                            productCard += '<h3>' + result.brandName + '</h3>';
+                            productCard += '<p>' + result.cost + '</p>';
+                            productCard += '</a>';
+                        });
+                        productCard += '</div>';
+                        productCard += '<button class="scroll-btn right">&gt;</button>';
+                        productCard += '</div>';
+                        $("#products-container").append(productCard);
+                    });
+                    $(".scroll-btn").click(function() {
+                        var direction = $(this).hasClass("left") ? "-=" : "+=";
+                        $(this).siblings(".results-container").animate({
+                            scrollLeft: direction + "200px"
+                        }, 300);
+                    });
+                    $("#products-container").show();
                 },
                 error: function(err){
+                    $("#loading").hide();
+                    $("#error").show().html("<p>Sorry, something went wrong. Please try again later.</p>");
                     console.log(err);
                 }
             });

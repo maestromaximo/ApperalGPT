@@ -60,34 +60,43 @@ def fetch_product_data(url):
     brand = url.split('/')[2].split('.')[1]
 
     # Heuristic to extract price from webpage content
-    # We look for a string that starts with a currency symbol, followed by digits (possibly separated by a dot or comma)
-    #prices = re.findall(r'\$\d+[\.,]?\d*', soup.text)
-    #prices = re.findall(r'(\$|€|£|¥|₹)?\s*\d+[\.,]?\d*', soup.text)
-    prices = re.findall(r'(\$|€|£|¥|₹)?\s*\d+[\.,]\d*', soup.text)
+    prices = re.findall(r'\$\d+[\.,]?\d*', soup.text)
 
     if prices:
-        # If we found prices, return the first one.
-        # Note that this might not always be the correct price if the page contains multiple products or prices.
         price = prices[0]
     else:
         price = 'Not found'
 
-    return brand, price
+    # Try to find the first image on the page
+    image_tag = soup.find('img')
+    if image_tag and 'src' in image_tag.attrs:
+        image_url = image_tag['src']
+        # If the URL is relative, add the base URL
+        if not image_url.startswith('http'):
+            base_url = '/'.join(url.split('/')[:3])
+            image_url = base_url + image_url
+    else:
+        image_url = "No image avalible"
+
+    return brand, price, image_url
+
 
 class Result:
     def __init__(self, url):
         self.url = url
-        self.brandName, self.cost = fetch_product_data(url)
+        self.brandName, self.cost, self.image_url = fetch_product_data(url)
 
     def __str__(self):
-        return f"URL: {self.url}\nBrand Name: {self.brandName}\nCost: {self.cost}"
+        return f"URL: {self.url}\nBrand Name: {self.brandName}\nCost: {self.cost}\nImage URL: {self.image_url}"
 
     def to_dict(self):
         return {
             "url": self.url,
             "brandName": self.brandName,
             "cost": self.cost,
+            "image_url": self.image_url,
         }
+
 
 
 
